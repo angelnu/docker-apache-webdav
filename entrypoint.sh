@@ -1,11 +1,7 @@
-#!/bin/bash
+#!/bin/sh
+htpasswd -cb /etc/apache2/webdav.password $USERNAME $PASSWORD
+chown root:apache /etc/apache2/webdav.password
+chmod 640 /etc/apache2/webdav.password
 
-if [[ -n "$USERNAME" ]] && [[ -n "$PASSWORD" ]]
-then
-	htpasswd -bc /etc/nginx/htpasswd $USERNAME $PASSWORD
-	echo Done.
-else
-    echo Using no auth.
-	sed -i 's%auth_basic "Restricted";% %g' /etc/nginx/conf.d/default.conf
-	sed -i 's%auth_basic_user_file htpasswd;% %g' /etc/nginx/conf.d/default.conf
-fi
+# Alpine 3.4 still uses the old name 'httpd', instead of 'apache2'.
+exec httpd -D FOREGROUND

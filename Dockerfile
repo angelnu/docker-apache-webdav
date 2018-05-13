@@ -1,12 +1,24 @@
-FROM ubuntu:trusty
+ARG BASE=alpine
+FROM $BASE
 
-RUN apt-get update && apt-get install -y nginx nginx-extras apache2-utils
+ARG arch=none
+ENV ARCH=$arch
+
+COPY qemu/qemu-$ARCH-static* /usr/bin/
+
+RUN apk add --no-cache apache2-webdav apache2-utils \
+  # Create a subdir for webdav lockdb file.
+  && mkdir -p /var/lib/dav \
+  && chown apache:apache /var/lib/dav \
+  && chmod 755 /var/lib/dav \
+  # Create a subdir to hold the daemon's pid:
+  && mkdir -p /run/apache2
+
+ADD dav.conf /etc/apache2/conf.d/
+ADD entrypoint.sh /
+RUN chmod 750 /entrypoint.sh
 
 VOLUME /media
-EXPOSE 80
-COPY webdav.conf /etc/nginx/conf.d/default.conf
-RUN rm /etc/nginx/sites-enabled/*
+EXPOSE 80 443
 
-COPY entrypoint.sh /
-RUN chmod +x entrypoint.sh
-CMD /entrypoint.sh && nginx -g "daemon off;"
+CMD ["/entrypoint.sh"]
